@@ -1,6 +1,6 @@
 {
   "name": "dsh-starter",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "DSH onboarding starter: templates become standard-inheriting presets, with first-turn plugin checks and on-demand installs",
   "type": "module",
   "main": "src/index.js",
