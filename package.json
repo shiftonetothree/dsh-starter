@@ -1,7 +1,7 @@
 {
-  "name": "dsh-starter",
+  "name": "@commonworks/dsh-starter",
   "version": "0.3.5",
-  "description": "DSH onboarding starter: templates become standard-inheriting presets, with first-turn plugin checks and on-demand installs",
+  "description": "DSH starter presets by business scenario: legal-finance / office / life / study / dev / media, each a standard-inheriting agent preset with first-turn plugin checks and on-demand installs",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -19,5 +19,16 @@
     "cordis.patch.yml",
     "README.md"
   ],
-  "license": "MIT"
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "dsh-bundle",
+    "agent-preset",
+    "starter",
+    "scenario"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

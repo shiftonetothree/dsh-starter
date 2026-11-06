@@ -73,15 +73,21 @@ v0.3.5。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 
 ## 安装（Desktop）
 
-完全退出 Desktop，用 `file:` 安装：
+完全退出 Desktop，从 npm 装：
 
 ```powershell
 $dsh = "C:\Users\aivm\AppData\Local\Programs\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd"
-& $dsh plugin --profile desktop remove dsh-starter
+& $dsh plugin --profile desktop add @commonworks/dsh-starter
+```
+
+改过源码、要装本地这份时用 `file:`（复制安装，改完要 `remove` + `add`）：
+
+```powershell
+& $dsh plugin --profile desktop remove @commonworks/dsh-starter
 & $dsh plugin --profile desktop add "file:F:/code/dsh-starter"
 ```
 
-重新打开 Desktop。插件会作为 `dsh-starter` 出现在插件列表里，六个 preset 会出现在 Agent presets 里。
+重新打开 Desktop。插件会以 `@commonworks/dsh-starter` 出现在插件列表里，六个 preset 会出现在 Agent presets 里。
 
 > **不要用 `link:` 安装到 Desktop**：Junction 让模块落在工作区，Desktop 解析不到 `@deepseek-ai/dsh-tools`，插件会在导入阶段失败。
 >
