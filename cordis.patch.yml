@@ -1,0 +1,6 @@
+# dsh-starter bundle layer.
+# Mount the starter host plugin once. It registers the `starter` service and the
+# starter_* tools; it does not install anything by itself.
+- insert:
+    - id: starter
+      name: ./src/index.js

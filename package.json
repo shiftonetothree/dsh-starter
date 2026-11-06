@@ -1,0 +1,23 @@
+{
+  "name": "dsh-starter",
+  "version": "0.3.4",
+  "description": "DSH onboarding starter: templates become standard-inheriting presets, with first-turn plugin checks and on-demand installs",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./session": "./src/session.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "src",
+    "templates",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "license": "MIT"
+}
