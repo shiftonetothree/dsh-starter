@@ -37,7 +37,7 @@ v0.3.5。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 | --- | --- | --- | --- |
 | 法律与财务 | `legal-finance` / `legal-finance` | `dsh-univer-office`、`@liustack/modlens`、`dsh-free-search`、`dsh-math-calculator`、`@linxin666/dsh-client-ui-task-board` | 审合同、找法条、写文书、列办事流程；记账、票据、报表、税务、算钱 |
 | 办公帮手 | `office` / `office-helper` | `dsh-univer-office`、`@liustack/modlens`、`@linxin666/dsh-client-ui-task-board`、`dsh-free-search` | 文档、表格、汇报、邮件、会议纪要 |
-| 生活帮手 | `life` / `life-helper` | `dsh-free-search`、`dsh-tabbit`、`dsh-computer-use-win`、`@xmanrui/dsh-im`、`dsh-pocket`、`dsh-univer-office` | 查信息、比价、跑腿代办、记账、出行与家务 |
+| 生活帮手 | `life` / `life-helper` | `dsh-free-search`、`dsh-tabbit`、`dsh-computer-use-win`、`@xmanrui/dsh-im`、`dsh-pocket`、`dsh-univer-office`、`dsh-map-tools` | 查信息、比价、跑腿代办、记账、出行路线与家务 |
 | 学习帮手 | `study` / `study-helper` | `@yunmiao/studymate`、`dsh-ai4scholar`、`dsh-math-calculator`、`@liustack/modlens`、`@commonworks/historical-rag-lab`、`dsh-free-search` | 先摸底再定计划；课程、做题、论文阅读、历史人文 |
 | 技术开发 | `dev` / `tech-dev` | `superpowers-dsh`、`dsh-ops`、`dsh-deja` | 读代码再改、小步验证、Windows 工具链、历史会话记忆 |
 | 媒体创作 | `media` / `media-studio` | `dsh-comfyui`、`dsh-remotion`、`dsh-blender`、`dsh-free-search`、`@liustack/modlens` | 短视频、图文、封面、3D 资产 |
@@ -69,7 +69,7 @@ v0.3.5。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 | `@linxin666/dsh-web-all` | 与已单列的 task-board、pet 重复 |
 | `dsh-our-free-model` | 与启动器的模型配置同步重叠，按需手动打开 |
 
-> 原先仓库根的 `dsh-plugin-index.json`（32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
+> 原先仓库根的 `dsh-plugin-index.json`（当时 32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。之后新增的成员（`dsh-map-tools`）只出现在模板和这张表里，不再有独立清单文件。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
 
 ## 安装（Desktop）
 
