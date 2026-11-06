@@ -13,8 +13,8 @@ v0.3.5。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 - `starter` 服务：`list()` / `plan(id)` / `check(id)` / `diagnose()` / `run(id, opts)` / `uninstall(id, opts)` / `setPlugins(id, enabled, opts)`
 - 七个工具：`starter_list`、`starter_plan`、`starter_check`、`starter_diagnose`、`starter_apply`、`starter_remove`、`starter_set_plugins`
 - **先挂工具、后注册 preset**：preset 注册在后台执行（等 standard 最长 30 秒），失败只记录在 `starter_diagnose` 里，不会把整个插件带下去
-- **五个场景模板**：`legal-office`（法律与办公）、`life`（生活帮手）、`study`（学习帮手）、`dev`（技术开发）、`media`（媒体创作）
-- 每个模板对应一个 preset：`legal-office`、`life-helper`、`study-helper`、`tech-dev`、`media-studio`
+- **六个场景模板**：`legal-finance`（法律与财务）、`office`（办公帮手）、`life`（生活帮手）、`study`（学习帮手）、`dev`（技术开发）、`media`（媒体创作）
+- 每个模板对应一个 preset：`legal-finance`、`office-helper`、`life-helper`、`study-helper`、`tech-dev`、`media-studio`
 - **继承 `standard`**：preset 由 standard 的插件行克隆而来，只替换 persona；工具、skill、plan mode、compaction、delegation 全部来自 standard，starter 不重复定义
 - **preset 先全建，插件后装**：挂载时只注册 preset，不联网、不安装
 - **首轮提示**：每个模板都带成员插件，preset 里多挂一行 `starter-session`，在会话第一个 turn 的第一步注入一次提示，要求模型先调 `starter_check`、再问用户、得到同意后才安装
@@ -35,13 +35,16 @@ v0.3.5。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 
 | 场景 | 模板 / preset | 成员插件 | 用来做什么 |
 | --- | --- | --- | --- |
-| 法律与办公 | `legal-office` / `legal-office` | `dsh-univer-office`、`@liustack/modlens`、`dsh-free-search`、`@linxin666/dsh-client-ui-task-board` | 审合同、找法条与案例、写文书、列办事流程；文档表格汇报纪要 |
+| 法律与财务 | `legal-finance` / `legal-finance` | `dsh-univer-office`、`@liustack/modlens`、`dsh-free-search`、`dsh-math-calculator`、`@linxin666/dsh-client-ui-task-board` | 审合同、找法条、写文书、列办事流程；记账、票据、报表、税务、算钱 |
+| 办公帮手 | `office` / `office-helper` | `dsh-univer-office`、`@liustack/modlens`、`@linxin666/dsh-client-ui-task-board`、`dsh-free-search` | 文档、表格、汇报、邮件、会议纪要 |
 | 生活帮手 | `life` / `life-helper` | `dsh-free-search`、`dsh-tabbit`、`dsh-computer-use-win`、`@xmanrui/dsh-im`、`dsh-pocket`、`dsh-univer-office` | 查信息、比价、跑腿代办、记账、出行与家务 |
 | 学习帮手 | `study` / `study-helper` | `@yunmiao/studymate`、`dsh-ai4scholar`、`dsh-math-calculator`、`@liustack/modlens`、`@commonworks/historical-rag-lab`、`dsh-free-search` | 先摸底再定计划；课程、做题、论文阅读、历史人文 |
 | 技术开发 | `dev` / `tech-dev` | `superpowers-dsh`、`dsh-ops`、`dsh-deja` | 读代码再改、小步验证、Windows 工具链、历史会话记忆 |
 | 媒体创作 | `media` / `media-studio` | `dsh-comfyui`、`dsh-remotion`、`dsh-blender`、`dsh-free-search`、`@liustack/modlens` | 短视频、图文、封面、3D 资产 |
 
-**同一个插件可以出现在多个 preset。** 现在 `dsh-free-search` 在 4 个场景、`@liustack/modlens` 在 3 个、`dsh-univer-office` 在 2 个：它们本来就是跨场景的通用能力，按场景重复声明只是让每个 preset 自带完整依赖，不表示归属。副作用只有一个：卸载某个模板时，`starter_remove` 会先告出 `sharedWithTemplates`，别把别的场景还在用的插件删掉。
+「法律与财务」为什么放一起：这两个领域的规矩最硬——都有主管部门、都要引用依据（法条 / 会计准则与税法）、错了都有实际后果，所以共用同一条流程：先摘事实 → 找依据 → 给结论 → 标清不确定的地方。办公不同，它管的是格式和交付，所以单独一个场景。
+
+**同一个插件可以出现在多个 preset。** 现在 `dsh-free-search` 在 5 个场景、`@liustack/modlens` 在 4 个、`dsh-univer-office` 在 3 个、`dsh-math-calculator` 和任务看板各 2 个：它们本来就是跨场景的通用能力，按场景重复声明只是让每个 preset 自带完整依赖，不表示归属。副作用只有一个：卸载某个模板时，`starter_remove` 会先告出 `sharedWithTemplates`，别把别的场景还在用的插件删掉。
 
 **常驻，不进任何场景**（每个会话都用得上，随启动器一并安装）：
 
@@ -66,7 +69,7 @@ v0.3.5。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 | `@linxin666/dsh-web-all` | 与已单列的 task-board、pet 重复 |
 | `dsh-our-free-model` | 与启动器的模型配置同步重叠，按需手动打开 |
 
-> 原先仓库根的 `dsh-plugin-index.json`（32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。要查历史版本用 `git show HEAD~1:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
+> 原先仓库根的 `dsh-plugin-index.json`（32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
 
 ## 安装（Desktop）
 
@@ -78,7 +81,7 @@ $dsh = "C:\Users\aivm\AppData\Local\Programs\DeepSeek Harness\resources\runtime\
 & $dsh plugin --profile desktop add "file:F:/code/dsh-starter"
 ```
 
-重新打开 Desktop。插件会作为 `dsh-starter` 出现在插件列表里，五个 preset 会出现在 Agent presets 里。
+重新打开 Desktop。插件会作为 `dsh-starter` 出现在插件列表里，六个 preset 会出现在 Agent presets 里。
 
 > **不要用 `link:` 安装到 Desktop**：Junction 让模块落在工作区，Desktop 解析不到 `@deepseek-ai/dsh-tools`，插件会在导入阶段失败。
 >
@@ -98,7 +101,7 @@ $env:DSH_STARTER_DEBUG = "1"
 看到下面这行说明插件挂载、preset 注册、工具注册都成功了：
 
 ```
-starter: mounted; templates=dev, legal-office, life, media, study; presets=tech-dev, legal-office, life-helper, media-studio, study-helper; tools=starter_list,starter_plan,starter_check,starter_diagnose,starter_apply,starter_remove,starter_set_plugins
+starter: mounted; templates=dev, legal-finance, life, media, office, study; presets=tech-dev, legal-finance, life-helper, media-studio, office-helper, study-helper; tools=starter_list,starter_plan,starter_check,starter_diagnose,starter_apply,starter_remove,starter_set_plugins
 ```
 
 （`--profile probe` 后面不要再写 `web`。）
@@ -107,12 +110,12 @@ starter: mounted; templates=dev, legal-office, life, media, study; presets=tech-
 
 安装 starter、重启后：
 
-1. 五个场景 preset 已经出现在 Agent presets 里，但**没有任何插件被安装**；
-2. 新建会话，选择「法律与办公」之类的预设，发出第一句话；
+1. 六个场景 preset 已经出现在 Agent presets 里，但**没有任何插件被安装**；
+2. 新建会话，选择「法律与财务」之类的预设，发出第一句话；
 3. 该 preset 内的 `starter-session` 行在第一个 turn 注入一次提示，模型会：
-   - 调 `starter_check({ template: "legal-office" })`，拿到每个成员的 `installed` / `enabled` / `missing`；
+   - 调 `starter_check({ template: "legal-finance" })`，拿到每个成员的 `installed` / `enabled` / `missing`；
    - 如果 `missing` 非空，先问用户是否安装；
-   - 用户同意后调用 `starter_apply({ template: "legal-office", confirm: true, installMembers: true })`；
+   - 用户同意后调用 `starter_apply({ template: "legal-finance", confirm: true, installMembers: true })`；
    - 如果 `missing` 为空，直接回答，不重复询问。
 4. 成员需要额外条件的（`dsh-blender` 要本机已装 Blender、`@xmanrui/dsh-im` 要各平台登录），用户可以不装，直接在该 preset 里聊天。
 
@@ -120,9 +123,9 @@ starter: mounted; templates=dev, legal-office, life, media, study; presets=tech-
 
 ```text
 starter_list()
-  → starter_plan({ template: "legal-office" })
-  → starter_check({ template: "legal-office" })
-  → starter_apply({ template: "legal-office", confirm: true, installMembers: true })
+  → starter_plan({ template: "legal-finance" })
+  → starter_check({ template: "legal-finance" })
+  → starter_apply({ template: "legal-finance", confirm: true, installMembers: true })
 ```
 
 ## 卸载模板
@@ -132,15 +135,15 @@ starter_list()
 1. 预览：
 
 ```text
-starter_remove({ template: "legal-office" })
+starter_remove({ template: "legal-finance" })
 ```
 
-返回模板声明的插件、以及这些插件是否也被其他模板使用（`sharedWithTemplates`）。`legal-office` 的四个成员里，`dsh-univer-office` 也在生活帮手用，`@liustack/modlens` 也在学习帮手、媒体创作用，`dsh-free-search` 四个场景都在用——所以这里基本只能选 `keep`。
+返回模板声明的插件、以及这些插件是否也被其他模板使用（`sharedWithTemplates`）。`legal-finance` 的五个成员全都在别的场景里用到（`dsh-free-search` 5 个、`@liustack/modlens` 4 个、`dsh-univer-office` 3 个、`dsh-math-calculator` 与任务看板各 2 个），所以这里基本只能选 `keep`。
 
 2. 用户明确选择后再执行：
 
 ```text
-starter_remove({ template: "legal-office", confirm: true, membersAction: "keep" })
+starter_remove({ template: "legal-finance", confirm: true, membersAction: "keep" })
 ```
 
 - `keep`：插件保留
@@ -153,8 +156,8 @@ starter_remove({ template: "legal-office", confirm: true, membersAction: "keep" 
 不卸载、不删依赖，只切换成员 bundle 的启用状态：
 
 ```text
-starter_set_plugins({ template: "legal-office", enabled: false })              // 预览
-starter_set_plugins({ template: "legal-office", enabled: false, confirm: true }) // 执行
+starter_set_plugins({ template: "legal-finance", enabled: false })              // 预览
+starter_set_plugins({ template: "legal-finance", enabled: false, confirm: true }) // 执行
 ```
 
 - `enabled: false`：成员 bundle 从 `dsh.profile.bundles` 取消选择，插件不再加载，但依赖保留
@@ -176,7 +179,7 @@ starter_set_plugins({ template: "legal-office", enabled: false, confirm: true })
   "preset": {
     "id": "life-helper",
     "name": "生活帮手",
-    "order": 22,
+    "order": 23,
     "persona": "你是生活帮手，负责……\n\n## 工作方式\n1. ……"
   },
   "members": [
