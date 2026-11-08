@@ -2,6 +2,8 @@ node_modules/
 .npm-cache*/
 .npm-token
 .verify/
+.bili/
+.qr/
 *.tgz
 *.log
 .DS_Store
