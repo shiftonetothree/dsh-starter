@@ -6,7 +6,7 @@
 
 ## 状态
 
-v0.3.6。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
+v0.3.7。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
 
 已实现：
 
@@ -35,16 +35,16 @@ v0.3.6。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 
 | 场景 | 模板 / preset | 成员插件 | 用来做什么 |
 | --- | --- | --- | --- |
-| 法律与财务 | `legal-finance` / `legal-finance` | `dsh-univer-office`、`@liustack/modlens`、`dsh-free-search`、`dsh-math-calculator`、`@linxin666/dsh-client-ui-task-board` | 审合同、找法条、写文书、列办事流程；记账、票据、报表、税务、算钱 |
-| 办公帮手 | `office` / `office-helper` | `dsh-univer-office`、`@liustack/modlens`、`@linxin666/dsh-client-ui-task-board`、`dsh-free-search` | 文档、表格、汇报、邮件、会议纪要 |
-| 生活帮手 | `life` / `life-helper` | `dsh-free-search`、`dsh-tabbit`、`dsh-computer-use-win`、`@xmanrui/dsh-im`、`dsh-pocket`、`dsh-univer-office`、`dsh-map-tools` | 查信息、比价、跑腿代办、记账、出行路线与家务 |
-| 学习帮手 | `study` / `study-helper` | `@yunmiao/studymate`、`dsh-ai4scholar`、`dsh-math-calculator`、`@liustack/modlens`、`@commonworks/historical-rag-lab`、`dsh-free-search` | 先摸底再定计划；课程、做题、论文阅读、历史人文 |
-| 技术开发 | `dev` / `tech-dev` | `superpowers-dsh`、`dsh-ops`、`dsh-deja` | 读代码再改、小步验证、Windows 工具链、历史会话记忆 |
-| 媒体创作 | `media` / `media-studio` | `dsh-comfyui`、`dsh-remotion`、`dsh-blender`、`dsh-free-search`、`@liustack/modlens` | 短视频、图文、封面、3D 资产 |
+| 法律与财务 | `legal-finance` / `legal-finance` | `dsh-univer-office`、`@liustack/modlens`、`dsh-free-search`、`dsh-legal-clause`、`dsh-bookkeeping`、`dsh-math-calculator` | 审合同、找法条、写文书、走流程；记账、票据、报表、税务、算钱 |
+| 办公帮手 | `office` / `office-helper` | `dsh-univer-office`、`@liustack/modlens`、`@linxin666/dsh-client-ui-task-board`、`dsh-ppt`、`dsh-mermaid`、`dsh-genui` | 文档、表格、汇报、演示、图表、邮件、会议纪要 |
+| 生活帮手 | `life` / `life-helper` | `dsh-free-search`、`dsh-map-tools`、`dsh-tabbit`、`dsh-builtin-browser`、`dsh-computer-use-win`、`dsh-pocket`、`@xmanrui/dsh-im` | 查信息、比价、跑腿代办、出行路线；网页与桌面代办，结果推到手机 / IM |
+| 学习帮手 | `study` / `study-helper` | `@yunmiao/studymate`、`dsh-ai4scholar`、`@ggboy123/dsh-paper-reader`、`@commonworks/historical-rag-lab`、`@commonworks/dsh-circuit`、`dsh-math-calculator`、`@liustack/modlens` | 课程、做题、论文精读、历史人文、电路实验 |
+| 技术开发 | `dev` / `tech-dev` | `superpowers-dsh`、`dsh-ops`、`cc-safety-net`、`@linxin666/dsh-client-ui-git-graph`、`@linxin666/dsh-ssh`、`dsh-deja`、`@vectorize-io/hindsight-coding-agents` | 读代码再改、危险操作拦截、Git 图谱、SSH、跨 agent 与项目记忆 |
+| 媒体创作 | `media` / `media-studio` | `dsh-image-gen`、`@ninkch/dsh-infinite-canvas`、`dsh-ffmpeg`、`@commonworks/dsh-video-str`、`dsh-remotion`、`dsh-blender`、`@memef1f1y/dsh-plugin-tts`、`@liustack/modlens` | 选题、分镜、生图、配音、剪辑到成片；3D 资产 |
 
 「法律与财务」为什么放一起：这两个领域的规矩最硬——都有主管部门、都要引用依据（法条 / 会计准则与税法）、错了都有实际后果，所以共用同一条流程：先摘事实 → 找依据 → 给结论 → 标清不确定的地方。办公不同，它管的是格式和交付，所以单独一个场景。
 
-**同一个插件可以出现在多个 preset。** 现在 `dsh-free-search` 在 5 个场景、`@liustack/modlens` 在 4 个、`dsh-univer-office` 在 3 个、`dsh-math-calculator` 和任务看板各 2 个：它们本来就是跨场景的通用能力，按场景重复声明只是让每个 preset 自带完整依赖，不表示归属。副作用只有一个：卸载某个模板时，`starter_remove` 会先告出 `sharedWithTemplates`，别把别的场景还在用的插件删掉。
+**同一个插件可以出现在多个 preset。** 现在 `@liustack/modlens` 在 4 个场景（法律财务 / 办公 / 学习 / 媒体），`dsh-univer-office`、`dsh-free-search`、`dsh-math-calculator` 各 2 个：它们本来就是跨场景的通用能力，按场景重复声明只是让每个 preset 自带完整依赖，不表示归属。副作用只有一个：卸载某个模板时，`starter_remove` 会先告出 `sharedWithTemplates`，别把别的场景还在用的插件删掉。
 
 **常驻，不进任何场景**（每个会话都用得上，随启动器一并安装）：
 
@@ -59,17 +59,24 @@ v0.3.6。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 | `@linxin666/dsh-pet` | 桌面宠物挂件 |
 | `dsh-whale-widget` | 右下角 API 余额挂件 |
 
-**不纳入场景**（能力重复或需要额外条件，默认不装；要用手动开）：
+**不纳入场景**（能力重复、宿主不兼容或需要额外条件；要用手动开）：
 
 | 插件 | 为什么不做成场景成员 |
 | --- | --- |
-| `dsh-browser` | 与 `dsh-tabbit` 功能重复，留一个就够 |
+| `dsh-browser`、`dsh-browser-cdp` | 同为 CDP 共享浏览器，留 `dsh-builtin-browser` 一个 |
+| `dsh-windows-mcp` | 与 `dsh-computer-use-win` 同为桌面自动化，但必须另起 `uvx windows-mcp` 子进程 |
+| `dsh-comfyui` | 与 `dsh-image-gen` 同为生图，且要求本机 ComfyUI 服务器 |
+| `@tt-a1i/archify-dsh` | README 只测过 host `0.1.2-rc.1`，与当前 0.2.x 不匹配 |
+| `dsh-video-storyboard` | 只支持 `web` 类 profile，Desktop 的 `desktop` profile 被拒 |
+| `@linxin666/dsh-remote-web-ui` | 作者已标记 deprecated（替代品 `dsh-remote-bridge` 是给 Android 客户端的协议桥，不是同一功能） |
 | `dsh-wechat`、`dsh-lark-channel` | 与 `@xmanrui/dsh-im` 重复，IM 通道由它统一覆盖 |
 | `dsh-plugin` | 与 `dshmarket` 是两个独立市场，默认只留一个 |
 | `@linxin666/dsh-web-all` | 与已单列的 task-board、pet 重复 |
 | `dsh-our-free-model` | 与启动器的模型配置同步重叠，按需手动打开 |
 
-> 原先仓库根的 `dsh-plugin-index.json`（当时 32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。之后新增的成员（`dsh-map-tools`）只出现在模板和这张表里，不再有独立清单文件。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
+**成员里有几个需要自备外部条件**，装完不一定立刻能用（agent 调用时会报错并提示怎么补）：`dsh-ffmpeg` 要本机 FFmpeg/ffprobe、`dsh-blender` 要 Blender、`dsh-image-gen` 要订阅或 API key、`dsh-ai4scholar` 要付费 key、`dsh-tabbit` 要 Tabbit ≥1.9、`dsh-ops` 建议走它自己的安装器、`@commonworks/dsh-video-str` 看 B 站字幕要登录。
+
+> 原先仓库根的 `dsh-plugin-index.json`（当时 32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。之后新增的成员只活在这张表和模板里（现在 43 条成员、去重后 35 个包），不再有独立清单文件。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
 
 ## 安装（Desktop）
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * dsh-starter host plugin.
  *
  * Templates are data. At mount the starter registers one agent preset per
@@ -17,7 +17,7 @@ import { installMembers, memberSpec, partitionMembers, removeMembers, setMembers
 
 export const name = 'starter'
 export const inject = ['tools', 'agentPresets']
-export const VERSION = '0.3.6'
+export const VERSION = '0.3.7'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const packageRoot = join(here, '..')
@@ -405,7 +405,7 @@ export async function apply(ctx) {
         text: value.dryRun
           ? [
             `Preview: template preset ${value.preset} stays available`,
-            `Template plugins: ${value.members.join(', ') || '(none)'} — ask the user whether to keep or remove them`,
+            `Template plugins: ${value.members.join(', ') || '(none)'} 鈥?ask the user whether to keep or remove them`,
             value.sharedWithTemplates.length === 0 ? '' : `Also declared by: ${value.sharedWithTemplates.join(', ')}`,
           ].filter(Boolean).join('\n')
           : [
