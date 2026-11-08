@@ -6,7 +6,7 @@
 
 ## 状态
 
-v0.4.0。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
+v0.4.1。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
 
 已实现：
 
@@ -35,16 +35,18 @@ v0.4.0。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 
 | 场景 | 模板 / preset | 成员插件 | 用来做什么 |
 | --- | --- | --- | --- |
-| 法律与财务 | `legal-finance` / `legal-finance` | `dsh-univer-office`、`dsh-free-search`、`dsh-legal-clause`、`dsh-bookkeeping`、`dsh-math-calculator` | 审合同、找法条、写文书、走流程；记账、票据、报表、税务、算钱 |
+| 法律与财务 | `legal-finance` / `legal-finance` | `dsh-univer-office`、`dsh-free-search`、`dsh-legal-clause`、`dsh-bookkeeping`、`dsh-date-calc` | 审合同、找法条、写文书、走流程；记账、票据、报表、税务、算期限与天数 |
 | 办公帮手 | `office` / `office-helper` | `dsh-univer-office`、`@linxin666/dsh-client-ui-task-board`、`dsh-ppt`、`dsh-mermaid`、`dsh-genui` | 文档、表格、汇报、演示、图表、邮件、会议纪要 |
 | 生活帮手 | `life` / `life-helper` | `dsh-free-search`、`dsh-map-tools`、`dsh-tabbit`、`dsh-builtin-browser`、`dsh-computer-use-win`、`dsh-pocket`、`@xmanrui/dsh-im` | 查信息、比价、跑腿代办、出行路线；网页与桌面代办，结果推到手机 / IM |
-| 学习帮手 | `study` / `study-helper` | `@yunmiao/studymate`、`dsh-ai4scholar`、`@ggboy123/dsh-paper-reader`、`@commonworks/dsh-video-str`、`@commonworks/historical-rag-lab`、`@commonworks/dsh-circuit`、`dsh-math-calculator` | 课程、做题、论文精读、网课与讲座、历史人文、电路实验 |
+| 学习帮手 | `study` / `study-helper` | `@yunmiao/studymate`、`dsh-ai4scholar`、`@ggboy123/dsh-paper-reader`、`@commonworks/dsh-video-str`、`@commonworks/historical-rag-lab`、`@commonworks/dsh-circuit` | 课程、做题（用内置 Python 核对算式）、论文精读、网课与讲座、历史人文、电路实验 |
 | 技术开发 | `dev` / `tech-dev` | `superpowers-dsh`、`dsh-ops`、`cc-safety-net`、`@linxin666/dsh-client-ui-git-graph`、`@linxin666/dsh-ssh`、`dsh-deja`、`@vectorize-io/hindsight-coding-agents` | 读代码再改、危险操作拦截、Git 图谱、SSH、跨 agent 与项目记忆 |
 | 媒体创作 | `media` / `media-studio` | `dsh-image-gen`、`@ninkch/dsh-infinite-canvas`、`dsh-ffmpeg`、`@commonworks/dsh-video-str`、`dsh-remotion`、`dsh-blender`、`@memef1f1y/dsh-plugin-tts` | 选题、分镜、生图、配音、剪辑到成片；3D 资产 |
 
 「法律与财务」为什么放一起：这两个领域的规矩最硬——都有主管部门、都要引用依据（法条 / 会计准则与税法）、错了都有实际后果，所以共用同一条流程：先摘事实 → 找依据 → 给结论 → 标清不确定的地方。办公不同，它管的是格式和交付，所以单独一个场景。
 
-**同一个插件可以出现在多个 preset。** 现在 `dsh-univer-office`、`dsh-free-search`、`dsh-math-calculator`、`@commonworks/dsh-video-str`（学习看网课 + 媒体看参考片）各在 2 个场景：它们本来就是跨场景的通用能力，按场景重复声明只是让每个 preset 自带完整依赖，不表示归属。副作用只有一个：卸载某个模板时，`starter_remove` 会先告出 `sharedWithTemplates`，别把别的场景还在用的插件删掉。
+**同一个插件可以出现在多个 preset。** 现在 `dsh-univer-office`、`dsh-free-search`、`@commonworks/dsh-video-str`（学习看网课 + 媒体看参考片）各在 2 个场景：它们本来就是跨场景的通用能力，按场景重复声明只是让每个 preset 自带完整依赖，不表示归属。副作用只有一个：卸载某个模板时，`starter_remove` 会先告出 `sharedWithTemplates`，别把别的场景还在用的插件删掉。
+
+**算数不用插件。** 原来两个场景挂的 `dsh-math-calculator`（BigNumber / 符号微积分 / 统计）因报错已移除。现在一律用 DSH 自带 Python（`load_workspace_dependencies` 返回的解释器带 numpy / pandas）核对算式；期限与天数用 `dsh-date-calc`；需要符号运算时用 `dsh-python-env` 装 sympy（自动走国内镜像）。
 
 **常驻，不进任何场景**（每个会话都用得上，随启动器一并安装）：
 
@@ -76,7 +78,7 @@ v0.4.0。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 
 **成员里有几个需要自备外部条件**，装完不一定立刻能用（agent 调用时会报错并提示怎么补）：`dsh-ffmpeg` 要本机 FFmpeg/ffprobe、`dsh-blender` 要 Blender、`dsh-image-gen` 要订阅或 API key、`dsh-ai4scholar` 要付费 key、`dsh-tabbit` 要 Tabbit ≥1.9、`dsh-ops` 建议走它自己的安装器、`@commonworks/dsh-video-str` 看 B 站字幕要登录。
 
-> 原先仓库根的 `dsh-plugin-index.json`（当时 32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。之后新增的成员只活在这张表和模板里（现在 38 条成员、去重后 34 个包），不再有独立清单文件。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
+> 原先仓库根的 `dsh-plugin-index.json`（当时 32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。之后新增的成员只活在这张表和模板里（现在 37 条成员、去重后 34 个包），不再有独立清单文件。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
 
 ## 安装（Desktop）
 
@@ -151,7 +153,7 @@ starter_list()
 starter_remove({ template: "legal-finance" })
 ```
 
-返回模板声明的插件、以及这些插件是否也被其他模板使用（`sharedWithTemplates`）。`legal-finance` 的五个成员里，`dsh-univer-office`、`dsh-free-search`、`dsh-math-calculator` 也各在另一个场景用（各 2 个），`dsh-legal-clause` 和 `dsh-bookkeeping` 是它独占；即使独占，删之前也要先问用户。
+返回模板声明的插件、以及这些插件是否也被其他模板使用（`sharedWithTemplates`）。`legal-finance` 的五个成员里，`dsh-univer-office` 和 `dsh-free-search` 也各在另一个场景用（各 2 个），`dsh-legal-clause`、`dsh-bookkeeping`、`dsh-date-calc` 是它独占；即使独占，删之前也要先问用户。
 
 2. 用户明确选择后再执行：
 
