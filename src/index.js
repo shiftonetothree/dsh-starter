@@ -12,12 +12,13 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { loadTemplates } from './templates.js'
+import { COMMON_MEMBERS } from './common.js'
 import { buildPresetDefinition, waitForStandard } from './presets.js'
 import { installMembers, memberSpec, partitionMembers, removeMembers, setMembersEnabled } from './install.js'
 
 export const name = 'starter'
 export const inject = ['tools', 'agentPresets']
-export const VERSION = '0.4.1'
+export const VERSION = '0.5.0'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const packageRoot = join(here, '..')
@@ -68,12 +69,21 @@ export async function apply(ctx) {
 
   const list = () => templates
 
+  /**
+   * Scenario members first, then the common ones: installMembers stops at the
+   * first failure, so a plugin the user asked for is not blocked by a
+   * general-purpose one later in the list.
+   * @param {import('./templates.js').Template} template
+   * @returns {readonly import('./templates.js').TemplateMember[]}
+   */
+  const membersOf = template => [...(template.members ?? []), ...COMMON_MEMBERS]
+
   const plan = id => {
     const template = find(id)
     return {
       preset: template.preset.id,
       presetName: template.preset.name,
-      members: (template.members ?? []).map(memberSpec),
+      members: membersOf(template).map(memberSpec),
       ...(template.firstTask === undefined ? {} : { firstTask: template.firstTask }),
     }
   }
@@ -86,7 +96,7 @@ export async function apply(ctx) {
     }
     const bundles = await manager.listBundles()
     const byName = new Map(bundles.map(bundle => [bundle.name, bundle]))
-    const members = (template.members ?? []).map(member => {
+    const members = membersOf(template).map(member => {
       const info = byName.get(member.name)
       return {
         spec: memberSpec(member),
@@ -115,7 +125,8 @@ export async function apply(ctx) {
     templates: templates.map(template => ({
       id: template.id,
       preset: template.preset.id,
-      members: (template.members ?? []).length,
+      members: template.members?.length ?? 0,
+      common: COMMON_MEMBERS.length,
     })),
   })
 
@@ -125,26 +136,26 @@ export async function apply(ctx) {
       throw new Error('starter_apply requires confirm: true; call starter_plan first and show the plan to the user')
     }
     const installed = options.installMembers === true
-      ? await installMembers(ctx.get('pluginManager'), template.members ?? [])
+      ? await installMembers(ctx.get('pluginManager'), membersOf(template))
       : []
     return {
       preset: template.preset.id,
-      members: (template.members ?? []).map(memberSpec),
+      members: membersOf(template).map(memberSpec),
       installed,
       ...(template.firstTask === undefined ? {} : { firstTask: template.firstTask }),
     }
   }
 
   const sharedTemplates = (id, template) => {
-    const names = new Set((template.members ?? []).map(member => member.name))
+    const names = new Set(membersOf(template).map(member => member.name))
     return templates
-      .filter(other => other.id !== id && (other.members ?? []).some(member => names.has(member.name)))
+      .filter(other => other.id !== id && membersOf(other).some(member => names.has(member.name)))
       .map(other => other.id)
   }
 
   const uninstall = async (id, options = {}) => {
     const template = find(id)
-    const members = (template.members ?? []).map(memberSpec)
+    const members = membersOf(template).map(memberSpec)
     const sharedWith = sharedTemplates(id, template)
     const choice = options.membersAction
 
@@ -167,7 +178,7 @@ export async function apply(ctx) {
     }
 
     const removedMembers = choice === 'remove'
-      ? await removeMembers(ctx.get('pluginManager'), template.members ?? [])
+      ? await removeMembers(ctx.get('pluginManager'), membersOf(template))
       : []
 
     return {
@@ -182,7 +193,7 @@ export async function apply(ctx) {
 
   const setPlugins = async (id, enabled, options = {}) => {
     const template = find(id)
-    const { toggleable, protectedMembers: protectedOnes } = partitionMembers(template.members ?? [])
+    const { toggleable, protectedMembers: protectedOnes } = partitionMembers(membersOf(template))
     const skippedProtected = protectedOnes.map(member => member.name)
     if (options.confirm !== true) {
       return { dryRun: true, enabled, members: toggleable.map(memberSpec), skippedProtected, results: [] }
@@ -231,7 +242,7 @@ export async function apply(ctx) {
           title: template.title,
           description: template.description,
           preset: template.preset.id,
-          members: template.members?.length ?? 0,
+          members: membersOf(template).length,
         })),
       }
     },

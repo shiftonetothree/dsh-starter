@@ -6,7 +6,7 @@
 
 ## 状态
 
-v0.4.1。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
+v0.5.0。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
 
 已实现：
 
@@ -17,7 +17,7 @@ v0.4.1。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 - 每个模板对应一个 preset：`legal-finance`、`office-helper`、`life-helper`、`study-helper`、`tech-dev`、`media-studio`
 - **继承 `standard`**：preset 由 standard 的插件行克隆而来，只替换 persona；工具、skill、plan mode、compaction、delegation 全部来自 standard，starter 不重复定义
 - **preset 先全建，插件后装**：挂载时只注册 preset，不联网、不安装
-- **首轮提示**：每个模板都带成员插件，preset 里多挂一行 `starter-session`，在会话第一个 turn 的第一步注入一次提示，要求模型先调 `starter_check`、再问用户、得到同意后才安装
+- **首轮提示**：每个 preset 都多挂一行 `starter-session`，在会话第一个 turn 的第一步注入一次提示：先调 `starter_check`，把「通用插件」和「本场景插件」分两组列给用户，得到同意后才安装
 - **不写工作目录**：没有 `AGENTS.md`、没有项目目录、没有位置选择
 - `starter_apply` 可显式 `installMembers: true`，通过 `ctx.pluginManager.installBundle` 逐个安装成员（默认关闭；失败即停并报告）
 - 卸载模板：**插件保留还是卸载必须由用户选择**（`membersAction: keep | remove`）；preset 在 starter 安装期间一直可用
@@ -33,7 +33,9 @@ v0.4.1。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 
 场景按「谁在用、解决哪类现实问题」划分，一个场景一个 preset。成员插件的含义是「这个场景需要时装上哪些能力」，不是「这个插件归谁所有」。
 
-| 场景 | 模板 / preset | 成员插件 | 用来做什么 |
+**每个场景都会额外推荐同一批通用插件**（下面的表只列场景专属成员；通用成员由 `src/common.js` 统一提供，`starter_plan` / `starter_check` / `starter_apply` 都会把它们算进去）。
+
+| 场景 | 模板 / preset | 场景成员插件 | 用来做什么 |
 | --- | --- | --- | --- |
 | 法律与财务 | `legal-finance` / `legal-finance` | `dsh-univer-office`、`dsh-free-search`、`dsh-legal-clause`、`dsh-bookkeeping`、`dsh-date-calc` | 审合同、找法条、写文书、走流程；记账、票据、报表、税务、算期限与天数 |
 | 办公帮手 | `office` / `office-helper` | `dsh-univer-office`、`@linxin666/dsh-client-ui-task-board`、`dsh-ppt`、`dsh-mermaid`、`dsh-genui` | 文档、表格、汇报、演示、图表、邮件、会议纪要 |
@@ -46,20 +48,21 @@ v0.4.1。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 
 **同一个插件可以出现在多个 preset。** 现在 `dsh-univer-office`、`dsh-free-search`、`@commonworks/dsh-video-str`（学习看网课 + 媒体看参考片）各在 2 个场景：它们本来就是跨场景的通用能力，按场景重复声明只是让每个 preset 自带完整依赖，不表示归属。副作用只有一个：卸载某个模板时，`starter_remove` 会先告出 `sharedWithTemplates`，别把别的场景还在用的插件删掉。
 
-**算数不用插件。** 原来两个场景挂的 `dsh-math-calculator`（BigNumber / 符号微积分 / 统计）因报错已移除。现在一律用 DSH 自带 Python（`load_workspace_dependencies` 返回的解释器带 numpy / pandas）核对算式；期限与天数用 `dsh-date-calc`；需要符号运算时用 `dsh-python-env` 装 sympy（自动走国内镜像）。
+**算数不用插件。** 原来两个场景挂的 `dsh-math-calculator`（BigNumber / 符号微积分 / 统计）因报错已移除。现在一律用 DSH 自带 Python（`load_workspace_dependencies` 返回的解释器带 numpy / pandas）核对算式；期限与天数用 `dsh-date-calc`；需要符号运算时用通用插件 `dsh-python-env` 装 sympy（自动走国内镜像）。
 
-**常驻，不进任何场景**（每个会话都用得上，随启动器一并安装）：
+**通用插件，任何场景都推荐**（来源 `src/common.js`，首轮提示会把它们和场景成员分开列给用户）：
 
 | 插件 | 作用 |
 | --- | --- |
-| `billion-context` | 长会话上下文压缩 |
+| `billion-context` | 长会话上下文压缩，省 token |
+| `dsh-context` | 上下文洞察：看 Context 组成、压缩与注入事件 |
+| `dshmarket` | 应用内浏览、安装、更新插件 |
+| `@michengai/dsh-skills-manager` | 统一加载与管理本机技能 |
+| `dsh-python-env` | Python 虚拟环境管理，装包自动切国内镜像（TUNA / 阿里 / USTC） |
 | `dsh-think-translate` | 思考链 / 任务卡显示层翻译 |
 | `dsh-codex-subscription` | 用 ChatGPT / Codex 订阅额度跑模型 |
-| `dshmarket` | 应用内浏览、安装插件 |
-| `@michengai/dsh-skills-manager` | 统一加载与管理本机技能 |
-| `dsh-dream-skin` | 主题皮肤与壁纸 |
-| `@linxin666/dsh-pet` | 桌面宠物挂件 |
-| `dsh-whale-widget` | 右下角 API 余额挂件 |
+
+**外观类常驻，随启动器安装，不在首轮推荐里**（推荐它们只会变成噪音）：`dsh-dream-skin`（主题皮肤）、`@linxin666/dsh-pet`（桌面宠物）、`dsh-whale-widget`（API 余额挂件）。
 
 **不纳入场景**（能力重复、宿主不兼容或需要额外条件；要用手动开）：
 
@@ -78,7 +81,7 @@ v0.4.1。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 
 **成员里有几个需要自备外部条件**，装完不一定立刻能用（agent 调用时会报错并提示怎么补）：`dsh-ffmpeg` 要本机 FFmpeg/ffprobe、`dsh-blender` 要 Blender、`dsh-image-gen` 要订阅或 API key、`dsh-ai4scholar` 要付费 key、`dsh-tabbit` 要 Tabbit ≥1.9、`dsh-ops` 建议走它自己的安装器、`@commonworks/dsh-video-str` 看 B 站字幕要登录。
 
-> 原先仓库根的 `dsh-plugin-index.json`（当时 32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。之后新增的成员只活在这张表和模板里（现在 37 条成员、去重后 34 个包），不再有独立清单文件。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
+> 原先仓库根的 `dsh-plugin-index.json`（当时 32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。之后新增的成员只活在这张表和模板里（现在场景成员 37 条 / 去重 34 个包，通用插件 7 个，每个 preset 合计推荐 12-15 个），不再有独立清单文件。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
 
 ## 安装（Desktop）
 

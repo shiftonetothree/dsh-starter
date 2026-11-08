@@ -8,6 +8,8 @@
 
 const PERSONA = '@deepseek-ai/dsh-persona'
 
+import { COMMON_MEMBERS } from './common.js'
+
 /**
  * Clone one preset's declared plugin list so per-template edits cannot mutate
  * the standard definition.
@@ -47,8 +49,9 @@ export function buildPresetDefinition(template, standardPlugins, sessionModuleUr
   else rows[index] = persona
 
   // A template with plugins needs one extra row: a prompt hook that tells the
-  // model to check installation after the first user message.
-  if ((template.members ?? []).length > 0) {
+  // model to check installation after the first user message. Common plugins
+  // count too — every preset recommends them.
+  if ((template.members ?? []).length > 0 || COMMON_MEMBERS.length > 0) {
     if (sessionModuleUrl === undefined) {
       throw new Error('starter: a template with members needs the session prompt module')
     }
