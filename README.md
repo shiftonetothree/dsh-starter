@@ -237,7 +237,7 @@ $env:DSH_DESKTOP_NODE_EXECUTABLE = "C:\Users\aivm\AppData\Local\Programs\DeepSee
 
 ## 设计约束
 
-见 [DESIGN.md](DESIGN.md)。核心三条：
+核心三条：
 
 1. 插件是唯一扩展方式，不碰 DSH 代码；
 2. 模板是数据，preset 是组合；模板不产生工作区文件；
