@@ -14,11 +14,11 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { loadTemplates } from './templates.js'
 import { COMMON_MEMBERS } from './common.js'
 import { buildPresetDefinition, waitForStandard } from './presets.js'
-import { installMembers, memberSpec, partitionMembers, removeMembers, setMembersEnabled } from './install.js'
+import { installOne, memberSpec, partitionMembers, removeMembers, setMembersEnabled } from './install.js'
 
 export const name = 'starter'
 export const inject = ['tools', 'agentPresets']
-export const VERSION = '0.5.0'
+export const VERSION = '0.6.0'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const packageRoot = join(here, '..')
@@ -70,9 +70,8 @@ export async function apply(ctx) {
   const list = () => templates
 
   /**
-   * Scenario members first, then the common ones: installMembers stops at the
-   * first failure, so a plugin the user asked for is not blocked by a
-   * general-purpose one later in the list.
+   * Scenario members first, then the common ones, so the plugins the user
+   * actually asked for are offered (and installed) before the general ones.
    * @param {import('./templates.js').Template} template
    * @returns {readonly import('./templates.js').TemplateMember[]}
    */
@@ -135,14 +134,67 @@ export async function apply(ctx) {
     if (options.confirm !== true) {
       throw new Error('starter_apply requires confirm: true; call starter_plan first and show the plan to the user')
     }
-    const installed = options.installMembers === true
-      ? await installMembers(ctx.get('pluginManager'), membersOf(template))
-      : []
     return {
       preset: template.preset.id,
       members: membersOf(template).map(memberSpec),
-      installed,
       ...(template.firstTask === undefined ? {} : { firstTask: template.firstTask }),
+      note: options.installMembers === true
+        ? 'installMembers is ignored: install one plugin per starter_install call, not a batch.'
+        : undefined,
+    }
+  }
+
+  /**
+   * Install exactly one member. The model loops; each call is its own chunk of
+   * work so the rest of DSH is not blocked for a whole batch.
+   */
+  const installNext = async (id, options = {}) => {
+    const template = find(id)
+    if (options.confirm !== true) {
+      throw new Error('starter_install requires confirm: true; ask the user first')
+    }
+    const manager = ctx.get('pluginManager')
+    if (manager === undefined) {
+      throw new Error('starter: this profile has no plugin manager; install plugins from the Plugins page')
+    }
+    const members = membersOf(template)
+    const bundles = await manager.listBundles()
+    const installedNames = new Set(bundles.filter(bundle => bundle.installed === true).map(bundle => bundle.name))
+    let pending = members.filter(member => !installedNames.has(member.name))
+
+    if (options.member !== undefined) {
+      const wanted = pending.find(member => member.name === options.member)
+      if (wanted === undefined) {
+        throw new Error(`${JSON.stringify(options.member)} is not pending for template ${JSON.stringify(id)}; it is either already installed or not part of this template`)
+      }
+      pending = [wanted, ...pending.filter(member => member.name !== wanted.name)]
+    }
+
+    if (pending.length === 0) {
+      return {
+        template: template.id,
+        preset: template.preset.id,
+        spec: '',
+        ok: true,
+        remaining: [],
+        installed: members.length,
+        total: members.length,
+        done: true,
+      }
+    }
+
+    const result = await installOne(manager, pending[0])
+    const remaining = (result.ok ? pending.slice(1) : pending).map(memberSpec)
+    return {
+      template: template.id,
+      preset: template.preset.id,
+      spec: result.spec,
+      ok: result.ok,
+      ...(result.detail === undefined ? {} : { detail: result.detail }),
+      remaining,
+      installed: members.length - remaining.length,
+      total: members.length,
+      done: remaining.length === 0,
     }
   }
 
@@ -202,7 +254,7 @@ export async function apply(ctx) {
     return { dryRun: false, enabled, members: toggleable.map(memberSpec), skippedProtected, results }
   }
 
-  ctx.provide('starter', { list, plan, check, diagnose, run, uninstall, setPlugins })
+  ctx.provide('starter', { list, plan, check, diagnose, run, installNext, uninstall, setPlugins })
 
   ctx.tools.register(defineTool({
     name: 'starter_list',
@@ -332,7 +384,7 @@ export async function apply(ctx) {
     parameters: {
       template: { type: 'string', required: true, description: 'Template id from starter_list.' },
       confirm: { type: 'boolean', required: true, description: 'Must be true; set only after the user approved the plan.' },
-      installMembers: { type: 'boolean', description: 'Also install the template plugins through the plugin manager. Default false.' },
+      installMembers: { type: 'boolean', description: 'Deprecated and ignored: plugins are installed one per starter_install call.' },
     },
     output: {
       schema: {
@@ -341,28 +393,17 @@ export async function apply(ctx) {
         properties: {
           preset: { type: 'string', required: true },
           members: { type: 'array', required: true, items: { type: 'string' } },
-          installed: {
-            type: 'array',
-            required: true,
-            items: {
-              type: 'object',
-              additionalProperties: false,
-              properties: {
-                spec: { type: 'string', required: true },
-                ok: { type: 'boolean', required: true },
-                detail: { type: 'string' },
-              },
-            },
-          },
           firstTask: { type: 'string' },
+          note: { type: 'string' },
         },
       },
       render: (_args, value) => [{
         type: 'text',
         text: [
           `Preset ready: ${value.preset}`,
-          value.members.length === 0 ? '' : `Plugins: ${value.installed.map(i => `${i.spec} ${i.ok ? 'ok' : `failed (${i.detail ?? 'unknown'})`}`).join(', ')}`,
+          value.members.length === 0 ? '' : `Plugins to install one by one (${value.members.length}): ${value.members.join(', ')}`,
           value.firstTask === undefined ? '' : `First task: ${value.firstTask}`,
+          value.note === undefined ? '' : `Note: ${value.note}`,
         ].filter(Boolean).join('\n'),
       }],
     },
@@ -370,6 +411,49 @@ export async function apply(ctx) {
       return run(args.template, {
         confirm: args.confirm === true,
         installMembers: args.installMembers === true,
+      })
+    },
+  }))
+
+  ctx.tools.register(defineTool({
+    name: 'starter_install',
+    description: 'Install exactly ONE plugin of a starter template, then report what is left. Call it once per plugin, waiting for each result: a batch install blocks every other DSH task. When remaining is empty the template is fully installed.',
+    parameters: {
+      template: { type: 'string', required: true, description: 'Template id from starter_list.' },
+      confirm: { type: 'boolean', required: true, description: 'Must be true; set only after the user agreed to install.' },
+      member: { type: 'string', description: 'Optional exact package name to install next. Omit to take the first pending plugin in template order.' },
+    },
+    output: {
+      schema: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          template: { type: 'string', required: true },
+          preset: { type: 'string', required: true },
+          spec: { type: 'string', required: true },
+          ok: { type: 'boolean', required: true },
+          detail: { type: 'string' },
+          remaining: { type: 'array', required: true, items: { type: 'string' } },
+          installed: { type: 'integer', required: true },
+          total: { type: 'integer', required: true },
+          done: { type: 'boolean', required: true },
+        },
+      },
+      render: (_args, value) => [{
+        type: 'text',
+        text: value.done && value.spec === ''
+          ? `Nothing to install for ${value.template}: all ${value.total} plugins are already installed.`
+          : [
+            `${value.spec} ${value.ok ? 'installed' : `failed (${value.detail ?? 'unknown'})`}`,
+            `Progress: ${value.installed}/${value.total}`,
+            value.remaining.length === 0 ? 'All plugins installed.' : `Next (${value.remaining.length} left): ${value.remaining.join(', ')}`,
+          ].join('\n'),
+      }],
+    },
+    async execute(args) {
+      return installNext(args.template, {
+        confirm: args.confirm === true,
+        member: args.member,
       })
     },
   }))

@@ -6,12 +6,12 @@
 
 ## 状态
 
-v0.5.0。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
+v0.6.0。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
 
 已实现：
 
-- `starter` 服务：`list()` / `plan(id)` / `check(id)` / `diagnose()` / `run(id, opts)` / `uninstall(id, opts)` / `setPlugins(id, enabled, opts)`
-- 七个工具：`starter_list`、`starter_plan`、`starter_check`、`starter_diagnose`、`starter_apply`、`starter_remove`、`starter_set_plugins`
+- `starter` 服务：`list()` / `plan(id)` / `check(id)` / `diagnose()` / `run(id, opts)` / `installNext(id, opts)` / `uninstall(id, opts)` / `setPlugins(id, enabled, opts)`
+- 八个工具：`starter_list`、`starter_plan`、`starter_check`、`starter_diagnose`、`starter_apply`、`starter_install`、`starter_remove`、`starter_set_plugins`
 - **先挂工具、后注册 preset**：preset 注册在后台执行（等 standard 最长 30 秒），失败只记录在 `starter_diagnose` 里，不会把整个插件带下去
 - **六个场景模板**：`legal-finance`（法律与财务）、`office`（办公帮手）、`life`（生活帮手）、`study`（学习帮手）、`dev`（技术开发）、`media`（媒体创作）
 - 每个模板对应一个 preset：`legal-finance`、`office-helper`、`life-helper`、`study-helper`、`tech-dev`、`media-studio`
@@ -19,7 +19,7 @@ v0.5.0。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 - **preset 先全建，插件后装**：挂载时只注册 preset，不联网、不安装
 - **首轮提示**：每个 preset 都多挂一行 `starter-session`，在会话第一个 turn 的第一步注入一次提示：先调 `starter_check`，把「通用插件」和「本场景插件」分两组列给用户，得到同意后才安装
 - **不写工作目录**：没有 `AGENTS.md`、没有项目目录、没有位置选择
-- `starter_apply` 可显式 `installMembers: true`，通过 `ctx.pluginManager.installBundle` 逐个安装成员（默认关闭；失败即停并报告）
+- `starter_apply` 只负责"准备好 preset"，**不再批量装插件**；插件由 `starter_install` 一次装一个，模型每装一个就汇报进度——**批量安装会卡住 DSH 的其它任务**，所以刻意拆开
 - 卸载模板：**插件保留还是卸载必须由用户选择**（`membersAction: keep | remove`）；preset 在 starter 安装期间一直可用
 - 批量启停模板插件：`setBundleEnabled` 逐个启用/禁用成员 bundle；**starter 自己永远跳过，无法禁用自己**
 
@@ -132,8 +132,8 @@ starter: mounted; templates=dev, legal-finance, life, media, office, study; pres
 2. 新建会话，选择「法律与财务」之类的预设，发出第一句话；
 3. 该 preset 内的 `starter-session` 行在第一个 turn 注入一次提示，模型会：
    - 调 `starter_check({ template: "legal-finance" })`，拿到每个成员的 `installed` / `enabled` / `missing`；
-   - 如果 `missing` 非空，先问用户是否安装；
-   - 用户同意后调用 `starter_apply({ template: "legal-finance", confirm: true, installMembers: true })`；
+   - 如果 `missing` 非空，按「通用插件 / 本场景插件」两组列给用户，一次问清；
+   - 用户同意后**逐个安装**：每次只调 `starter_install({ template: "legal-finance", confirm: true })` 装一个，汇报进度，再装下一个；
    - 如果 `missing` 为空，直接回答，不重复询问。
 4. 成员需要额外条件的（`dsh-blender` 要本机已装 Blender、`@xmanrui/dsh-im` 要各平台登录），用户可以不装，直接在该 preset 里聊天。
 
@@ -143,8 +143,12 @@ starter: mounted; templates=dev, legal-finance, life, media, office, study; pres
 starter_list()
   → starter_plan({ template: "legal-finance" })
   → starter_check({ template: "legal-finance" })
-  → starter_apply({ template: "legal-finance", confirm: true, installMembers: true })
+  → starter_apply({ template: "legal-finance", confirm: true })      // 只准备 preset
+  → starter_install({ template: "legal-finance", confirm: true })    // 装第一个
+  → starter_install({ template: "legal-finance", confirm: true })    // 再装下一个……直到 done
 ```
+
+> 为什么不是一次装完：`installBundle` 在一次工具调用里跑完整个列表，期间 DSH 的其它任务都被挡住。拆成一个插件一次调用后，每次只占一个较短的窗口，中间用户和其它会话还能继续干活。
 
 ## 卸载模板
 

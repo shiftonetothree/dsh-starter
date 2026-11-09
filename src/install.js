@@ -1,9 +1,9 @@
 /**
  * Member installation through the profile's plugin manager.
  *
- * Members are installed one at a time, in declaration order, and the loop stops
- * at the first failure so a partially applied template reports honestly instead
- * of pretending every member arrived.
+ * Exactly one plugin per call. The starter used to install a whole template in
+ * one call, but that blocks every other DSH task for the length of the batch, so
+ * the model now drives the loop: one `starter_install` call per plugin.
  */
 
 /**
@@ -16,26 +16,26 @@ export function memberSpec(member) {
 }
 
 /**
+ * Install exactly one member.
+ *
+ * Callers loop over members themselves, one tool call per plugin: installing a
+ * whole template in a single call blocks every other DSH task for the length of
+ * the batch, which is why the starter no longer does that.
  * @param {{ installBundle: (spec: string, options?: { enabled?: boolean }) => Promise<unknown> } | undefined} manager
- * @param {Array<{ name: string, version?: string, reason?: string }>} members
- * @returns {Promise<Array<{ spec: string, ok: boolean, detail?: string }>>}
+ * @param {{ name: string, version?: string, reason?: string }} member
+ * @returns {Promise<{ spec: string, ok: boolean, detail?: string }>}
  */
-export async function installMembers(manager, members) {
+export async function installOne(manager, member) {
   if (manager === undefined) {
     throw new Error('starter: this profile has no plugin manager; install members manually with `dsh plugin add`')
   }
-  const results = []
-  for (const member of members) {
-    const spec = memberSpec(member)
-    try {
-      await manager.installBundle(spec, { enabled: true })
-      results.push({ spec, ok: true })
-    } catch (error) {
-      results.push({ spec, ok: false, detail: error instanceof Error ? error.message : String(error) })
-      break
-    }
+  const spec = memberSpec(member)
+  try {
+    await manager.installBundle(spec, { enabled: true })
+    return { spec, ok: true }
+  } catch (error) {
+    return { spec, ok: false, detail: error instanceof Error ? error.message : String(error) }
   }
-  return results
 }
 
 /**

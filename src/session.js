@@ -40,9 +40,11 @@ export function apply(ctx, config = {}) {
     '在回答用户第一句话之前：',
     `1. 调用 starter_check({ template: "${template.id}" })，以工具结果为准判断是否已安装；不要凭记忆判断。`,
     '2. 如果 missing 非空，分两组列给用户：「通用插件」和「本场景插件」，说明各自作用，一次问清要不要装。',
-    `3. 用户同意后调用 starter_apply({ template: "${template.id}", confirm: true, installMembers: true })。`,
-    '4. 如果 missing 为空，直接回答用户，不要重复询问。',
-    '5. 用户拒绝安装时不要反复劝；照常用现有能力回答，并说明缺哪个插件会影响什么。',
+    `3. 用户同意后**逐个安装**：每次只调用 starter_install({ template: "${template.id}", confirm: true }) 装一个插件，拿到结果后先向用户汇报进度（已装几个 / 还剩几个），再调用下一次。`,
+    '4. 不要在一次回答里连续调用多次 starter_install，也不要用一次调用装完全部——批量安装会卡住 DSH 的其它任务。',
+    '5. 某个插件装失败就停下，报告失败项和原因，问用户是跳过还是继续；不要静默重试。',
+    '6. 如果 missing 为空，直接回答用户，不要重复询问。',
+    '7. 用户拒绝安装时不要反复劝；照常用现有能力回答，并说明缺哪个插件会影响什么。',
   ].join('\n')
 
   ctx.on('agent/pre-step', async ({ agent, turn, step, signal }, next) => {
