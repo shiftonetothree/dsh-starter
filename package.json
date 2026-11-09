@@ -1,6 +1,6 @@
 {
   "name": "@commonworks/dsh-starter",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "DSH starter presets by business scenario: legal-finance / office / life / study / dev / media, each a standard-inheriting agent preset with first-turn plugin checks and on-demand installs",
   "type": "module",
   "main": "src/index.js",
