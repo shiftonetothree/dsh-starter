@@ -18,7 +18,7 @@ import { installOne, memberSpec, partitionMembers, removeMembers, setMembersEnab
 
 export const name = 'starter'
 export const inject = ['tools', 'agentPresets']
-export const VERSION = '0.7.0'
+export const VERSION = '0.7.1'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const packageRoot = join(here, '..')

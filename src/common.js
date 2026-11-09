@@ -18,6 +18,7 @@
 
 /** @type {readonly TemplateMember[]} */
 export const COMMON_MEMBERS = Object.freeze([
+  { name: 'billion-context', reason: '长会话上下文压缩，省 token，单会话可跑很久' },
   { name: 'dsh-context', reason: '上下文洞察：看 Context 组成、压缩与注入事件' },
   { name: 'dshmarket', reason: '应用内插件市场：浏览、安装、更新其它插件' },
   { name: '@michengai/dsh-skills-manager', reason: '统一加载与管理本机技能' },
