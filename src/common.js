@@ -24,5 +24,6 @@ export const COMMON_MEMBERS = Object.freeze([
   { name: '@michengai/dsh-skills-manager', reason: '统一加载与管理本机技能' },
   { name: 'dsh-python-env', reason: 'Python 虚拟环境管理，装包自动切国内镜像（TUNA / 阿里 / USTC）' },
   { name: 'dsh-think-translate', reason: '思考链与任务卡显示层翻译' },
+  { name: '@y1x1n/dsh-prompt-optimizer', reason: '发送栏旁一键分析并改写提示词，复用当前会话模型' },
   { name: 'dsh-codex-subscription', reason: '用 ChatGPT / Codex 订阅额度跑模型' },
 ])

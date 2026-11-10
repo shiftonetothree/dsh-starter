@@ -6,7 +6,7 @@
 
 ## 状态
 
-v0.7.2。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
+v0.7.3。模板已合并进 preset：starter 挂载时创建所有 preset，但不安装任何依赖插件；用户在某个 preset 的会话里发出第一句话后，preset 内的 session 行会给 LLM 注入一次提示，先检查插件、再询问用户、最后安装。
 
 已实现：
 
@@ -39,7 +39,7 @@ v0.7.2。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 | --- | --- | --- | --- |
 | 法律与财务 | `legal-finance` / `legal-finance` | `dsh-free-search`、`dsh-date-calc` | 审合同、找法条、写文书、走流程；记账（xlsx 台账）、票据、报表、税务、算期限与天数 |
 | 办公帮手 | `office` / `office-helper` | `@linxin666/dsh-client-ui-task-board`、`dsh-ppt`、`dsh-mermaid`、`dsh-genui` | 文档、表格、汇报、演示、图表、邮件、会议纪要（docx/xlsx/pptx 走内置办公能力） |
-| 生活帮手 | `life` / `life-helper` | `dsh-free-search`、`dsh-map-tools`、`dsh-tabbit`、`dsh-builtin-browser`、`dsh-computer-use-win`、`dsh-pocket`、`@xmanrui/dsh-im` | 查信息、比价、跑腿代办、出行路线；网页与桌面代办，结果推到手机 / IM |
+| 生活帮手 | `life` / `life-helper` | `dsh-free-search`、`dsh-map-tools`、`dsh-tabbit`、`dsh-builtin-browser`、`dsh-computer-use-win`、`@commonworks/dsh-rearview`、`dsh-pocket`、`@xmanrui/dsh-im` | 查信息、比价、跑腿代办、出行路线；网页与桌面代办，结果推到手机 / IM；回看刷视频花的时间 |
 | 学习帮手 | `study` / `study-helper` | `@yunmiao/studymate`、`dsh-ai4scholar`、`@ggboy123/dsh-paper-reader`、`@commonworks/dsh-video-str`、`@commonworks/historical-rag-lab`、`@commonworks/dsh-circuit` | 课程、做题（用内置 Python 核对算式）、论文精读、网课与讲座、历史人文、电路实验 |
 | 技术开发 | `dev` / `tech-dev` | `superpowers-dsh`、`cc-safety-net`、`@linxin666/dsh-client-ui-git-graph`、`dsh-deja`、`@vectorize-io/hindsight-coding-agents` | 读代码再改、危险操作拦截、Git 图谱、跨 agent 与项目记忆 |
 | 媒体创作 | `media` / `media-studio` | `dsh-image-gen`、`@ninkch/dsh-infinite-canvas`、`dsh-ffmpeg`、`@commonworks/dsh-video-str`、`dsh-remotion`、`dsh-blender`、`@memef1f1y/dsh-plugin-tts` | 选题、分镜、生图、配音、剪辑到成片；3D 资产 |
@@ -60,6 +60,7 @@ v0.7.2。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 | `@michengai/dsh-skills-manager` | 统一加载与管理本机技能 |
 | `dsh-python-env` | Python 虚拟环境管理，装包自动切国内镜像（TUNA / 阿里 / USTC） |
 | `dsh-think-translate` | 思考链 / 任务卡显示层翻译 |
+| `@y1x1n/dsh-prompt-optimizer` | 发送栏旁一键分析并改写提示词（复用当前会话模型） |
 | `dsh-codex-subscription` | 用 ChatGPT / Codex 订阅额度跑模型 |
 
 **外观类常驻，随启动器安装，不在首轮推荐里**（推荐它们只会变成噪音）：`dsh-dream-skin`（主题皮肤）、`@linxin666/dsh-pet`（桌面宠物）、`dsh-whale-widget`（API 余额挂件）。
@@ -82,9 +83,9 @@ v0.7.2。模板已合并进 preset：starter 挂载时创建所有 preset，但�
 | `@linxin666/dsh-web-all` | 与已单列的 task-board、pet 重复 |
 | `dsh-our-free-model` | 与启动器的模型配置同步重叠，按需手动打开 |
 
-**成员里有几个需要自备外部条件**，装完不一定立刻能用（agent 调用时会报错并提示怎么补）：`dsh-ffmpeg` 要本机 FFmpeg/ffprobe、`dsh-blender` 要 Blender、`dsh-image-gen` 要订阅或 API key、`dsh-ai4scholar` 要付费 key、`dsh-tabbit` 要 Tabbit ≥1.9、`@commonworks/dsh-video-str` 看 B 站字幕要登录。
+**成员里有几个需要自备外部条件**，装完不一定立刻能用（agent 调用时会报错并提示怎么补）：`dsh-ffmpeg` 要本机 FFmpeg/ffprobe、`dsh-blender` 要 Blender、`dsh-image-gen` 要订阅或 API key、`dsh-ai4scholar` 要付费 key、`dsh-tabbit` 要 Tabbit ≥1.9、`@commonworks/dsh-video-str` 看 B 站字幕要登录、`@commonworks/dsh-rearview` 看 B 站观看历史要扫码登录。
 
-> 原先仓库根的 `dsh-plugin-index.json`（当时 32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。之后新增的成员只活在这张表和模板里（现在场景成员 31 条 / 去重 29 个包，通用插件 7 个，每个 preset 合计推荐 9-14 个），不再有独立清单文件。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
+> 原先仓库根的 `dsh-plugin-index.json`（当时 32 个插件的安装清单）已删除：内容并入上面的对照表和每个模板的 `members`。之后新增的成员只活在这张表和模板里（现在场景成员 32 条 / 去重 30 个包，通用插件 8 个，每个 preset 合计推荐 10-16 个），不再有独立清单文件。要查历史版本用 `git show c5f9860:dsh-plugin-index.json`。启动器自己那份清单在 `ai-learning-assistant-launcher/external-resources/dsh/`，与本仓库无关。
 
 ## 安装（Desktop）
 
@@ -163,7 +164,7 @@ starter_list()
 starter_remove({ template: "legal-finance" })
 ```
 
-返回模板声明的插件、以及这些插件是否也被其他模板使用（`sharedWithTemplates`）。`legal-finance` 的两个场景成员里，`dsh-free-search` 也被生活帮手用（2 个场景），`dsh-date-calc` 是它独占；再加上 7 个通用插件（每个 preset 都有），所以整串卸载基本只能选 `keep`。
+返回模板声明的插件、以及这些插件是否也被其他模板使用（`sharedWithTemplates`）。`legal-finance` 的两个场景成员里，`dsh-free-search` 也被生活帮手用（2 个场景），`dsh-date-calc` 是它独占；再加上 8 个通用插件（每个 preset 都有），所以整串卸载基本只能选 `keep`。
 
 2. 用户明确选择后再执行：
 
