@@ -20,6 +20,7 @@
 export const COMMON_MEMBERS = Object.freeze([
   { name: 'billion-context', reason: '长会话上下文压缩，省 token，单会话可跑很久' },
   { name: 'dsh-context', reason: '上下文洞察：看 Context 组成、压缩与注入事件' },
+  { name: 'dsh-longterm-memory', reason: '本机长期记忆：Obsidian 兼容的 Markdown 仓库 + 侧边栏管理页，每轮按预算检索注入' },
   { name: 'dshmarket', reason: '应用内插件市场：浏览、安装、更新其它插件' },
   { name: '@michengai/dsh-skills-manager', reason: '统一加载与管理本机技能' },
   { name: 'dsh-python-env', reason: 'Python 虚拟环境管理，装包自动切国内镜像（TUNA / 阿里 / USTC）' },
